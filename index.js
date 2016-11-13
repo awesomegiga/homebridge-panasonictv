@@ -1,7 +1,7 @@
 var inherits = require('util').inherits;
 var PanasonicViera = require('panasonic-viera-control/panasonicviera.js');
 var http = require('http');
-var Service, Characteristic, VolumeCharacteristic, ChannelCharacteristic;
+var Service, Characteristic;
 
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
@@ -38,7 +38,7 @@ function PanasonicTV(log, config) {
 }
 
 PanasonicTV.prototype.getServices = function() {
-  return [this.service, this.informationService];
+  return [this.informationService, this.service];
 }
 
 
