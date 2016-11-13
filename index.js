@@ -22,7 +22,8 @@ function PanasonicTV(log, config) {
   .on('set', this.setOn.bind(this))
   .on('get', this.getOn.bind(this));
 
-  this.service.addCharacteristic(Characteristic.Mute)
+  this.service
+  .addCharacteristic(Characteristic.Mute)
   .on('get', this.getMuteStatus.bind(this))
   .on('set', this.setMuteTV.bind(this));
 
