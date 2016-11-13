@@ -28,8 +28,9 @@ PanasonicTV.prototype = {
     self.getOnCallback = callback;
 
     this.getPowerState(this.HOST, function(state) {
-      self.getOnCallback(null,state);
+      self.getOnCallback(null, state);
     });
+    this.log(this.name, "Get Power State = ", self.getOnCallback);
   },
 
   setOn: function(on, callback) {
