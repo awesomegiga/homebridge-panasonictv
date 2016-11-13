@@ -14,6 +14,7 @@ function PanasonicTV(log, config) {
   this.name = config.name;
   this.HOST = config.ip;
   this.maxVolume = config.maxVolume || 12;
+  this.powerState;
 
 
   // Init the panasonic controller
@@ -24,13 +25,9 @@ function PanasonicTV(log, config) {
 PanasonicTV.prototype = {
 
   getOn: function(callback) {
-    var self = this;
-    self.getOnCallback = callback;
-
-    this.getPowerState(this.HOST, function(state) {
-      self.getOnCallback(null, state);
-    });
-    this.log(this.name, "Get Power State = ", self.getOnCallback);
+    this.getPowerState(this.HOST, this.powerState);
+    this.log(this.name, "Get Power State = ", this.powerState);
+    callback(null, this.powerState);
   },
 
   setOn: function(on, callback) {
