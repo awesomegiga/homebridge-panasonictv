@@ -1,6 +1,6 @@
 {
   "name": "homebridge-panasonictv",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Panasonic TV plugin for homebridge: https://github.com/nfarina/homebridge",
   "license": "ISC",
   "keywords": [
@@ -15,12 +15,13 @@
   },
   "contributors": [
     {
-      "name": "fguchelaar"
+      "name": "fguchelaar",
+      "name": "Awesomegiga"
     }
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/TG908/homebridge-panasonictv.git"
+    "url": "git://github.com/awesomegiga/homebridge-panasonictv.git"
   },
   "dependencies": {
     "http": "",

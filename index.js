@@ -4,14 +4,8 @@ var http = require('http');
 var Service, Characteristic, VolumeCharacteristic, ChannelCharacteristic;
 
 module.exports = function(homebridge) {
-
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
-
-  // we can only do this after we receive the homebridge API object
-  makeVolumeCharacteristic();
-  makeChannelCharacteristic();
-
   homebridge.registerAccessory("homebridge-panasonictv", "TV", PanasonicTV);
 }
 
@@ -24,95 +18,85 @@ function PanasonicTV(log, config) {
   this.service = new Service.Switch(this.name);
 
   this.service
-    .getCharacteristic(Characteristic.On)
-    .on("set", this.setOn.bind(this))
-    .on("get", this.getOn.bind(this));
+  .getCharacteristic(Characteristic.On)
+  .on('set', this.setOn.bind(this))
+  .on('get', this.getOn.bind(this));
 
-  this.service
-    .addCharacteristic(VolumeCharacteristic)
-    .on('get', this.getVolume.bind(this))
-    .on('set', this.setVolume.bind(this));
+  this.service.addCharacteristic(Characteristic.Mute)
+  .on('get', this.getMuteStatus.bind(this))
+  .on('set', this.setMuteTV.bind(this));
 
-  this.service
-    .addCharacteristic(ChannelCharacteristic)
-    .on('get', this.getChannel.bind(this))
-    .on('set', this.setChannel.bind(this));
+  this.informationService = new Service.AccessoryInformation();
+
+  this.informationService
+  .setCharacteristic(Characteristic.Manufacturer, "Panasonic")
+  .setCharacteristic(Characteristic.Model, "55CX700")
+  .setCharacteristic(Characteristic.SerialNumber, "Panasonic SN");
 
   // Init the panasonic controller
   this.tv = new PanasonicViera(this.HOST);
 }
 
 PanasonicTV.prototype.getServices = function() {
-  return [this.service];
+  return [this.service, this.informationService];
 }
 
-PanasonicTV.prototype.getOn = function(callback) {
 
-  var self = this;
-  self.getOnCallback = callback;
+PanasonicTV.prototype = {
 
-  this.getPowerState(this.HOST, function(state) {
-    self.getOnCallback(null,state == 1);
-  });
-}
+  getOn: function(callback) {
+    var self = this;
+    self.getOnCallback = callback;
 
-PanasonicTV.prototype.setOn = function(on, callback) {
+    this.getPowerState(this.HOST, function(state) {
+      self.getOnCallback(null,state == 1);
+    });
+  },
 
-  var self = this;
-  self.setOnCallback = callback;
+  setOn: function(on, callback) {
+    var self = this;
+    self.setOnCallback = callback;
 
-  this.getPowerState(this.HOST, function(state) {
+    this.getPowerState(this.HOST, function(state) {
 
-    if (state == -1 && on) {
-      self.tv.send(PanasonicViera.POWER_TOGGLE);
-      self.setOnCallback(null, true);
-    }
-    else if (state == 0 && on) {
-      self.setOnCallback(new Error("The TV is *really* off and cannot be woken up."));
-    }
-    else if (state == 1 && !on) {
-     self.tv.send(PanasonicViera.POWER_TOGGLE);
-      self.setOnCallback(null, false);
-    }
-    else {
-     self.setOnCallback(new Error("Cannot fullfill " + (on ? "ON" : "OFF") + " request. Powerstate == " + state));
-    }
-  })
-}
-
-PanasonicTV.prototype.getVolume = function(callback) {
-
-  var self = this;
-  self.volumeCallback = callback;
-
-  this.getPowerState(this.HOST, function(state) {
-
-      if (state == 1) {
-        self.tv.getVolume(function (data) {
-          var translatedVolume = (data / self.maxVolume) * 100;
-          self.volumeCallback(null, translatedVolume);
-        });
+      if (state == -1 && on) {
+        self.tv.send(PanasonicViera.POWER_TOGGLE);
+        self.setOnCallback(null, true);
+      }
+      else if (state == 0 && on) {
+        self.setOnCallback(new Error("The TV is *really* off and cannot be woken up."));
+      }
+      else if (state == 1 && !on) {
+       self.tv.send(PanasonicViera.POWER_TOGGLE);
+        self.setOnCallback(null, false);
       }
       else {
-        self.volumeCallback(null, 0);
+       self.setOnCallback(new Error("Cannot fullfill " + (on ? "ON" : "OFF") + " request. Powerstate == " + state));
       }
-  });
-}
+    })
+  },
 
-PanasonicTV.prototype.setVolume = function(volume, callback) {
-  // Here we don't care about the TV's powerstate. If it's off, then all calls time out or error..
-  var translatedVolume = (volume / 100) * this.maxVolume;
-  this.tv.setVolume(translatedVolume);
-  callback();
-}
+  setMuteTV: function(value, callback){
+    this.tv.setMute(value);
+    callback(null);
+  },
 
-PanasonicTV.prototype.getChannel = function(callback) {
-  callback(null, 0);
-}
+  getMuteStatus: function(callback){
+    var self = this;
+    self.muteCallback = callback;
 
-PanasonicTV.prototype.setChannel = function(channel, callback) {
-  this.tv.send("D" + channel);
-  callback();
+    this.getPowerState(this.HOST, function(state) {
+        if (state == 1) {
+          self.tv.getMute(function (muteStatus) {
+            self.muteCallback(null, muteStatus);
+          });
+        }
+        else {
+          self.muteCallback(null, 0);
+        }
+    });
+  }
+
 }
 
 // Returns:
@@ -194,40 +178,4 @@ PanasonicTV.prototype.getPowerState = function(ipAddress, stateCallback) {
 
   req.write(body);
   req.end();
-}
-
-function makeVolumeCharacteristic() {
-
-  VolumeCharacteristic = function() {
-    Characteristic.call(this, 'Volume', '91288267-5678-49B2-8D22-F57BE995AA93');
-    this.setProps({
-      format: Characteristic.Formats.INT,
-      unit: Characteristic.Units.PERCENTAGE,
-      maxValue: 100,
-      minValue: 0,
-      minStep: 1,
-      perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
-    });
-    this.value = this.getDefaultValue();
-  };
-
-  inherits(VolumeCharacteristic, Characteristic);
-}
-
-function makeChannelCharacteristic() {
-
-  ChannelCharacteristic = function () {
-    Characteristic.call(this, 'Channel', '212131F4-2E14-4FF4-AE13-C97C3232499D');
-    this.setProps({
-      format: Characteristic.Formats.INT,
-      unit: Characteristic.Units.NONE,
-      maxValue: 100,
-      minValue: 0,
-      minStep: 1,
-      perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
-    });
-    this.value = this.getDefaultValue();
-  };
-
-  inherits(ChannelCharacteristic, Characteristic);
 }
