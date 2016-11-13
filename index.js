@@ -15,31 +15,9 @@ function PanasonicTV(log, config) {
   this.HOST = config.ip;
   this.maxVolume = config.maxVolume || 12;
 
-  this.service = new Service.Switch(this.name);
-
-  this.service
-  .getCharacteristic(Characteristic.On)
-  .on('set', this.setOn.bind(this))
-  .on('get', this.getOn.bind(this));
-
-  this.service
-  .addCharacteristic(Characteristic.Mute)
-  .on('get', this.getMuteStatus.bind(this))
-  .on('set', this.setMuteTV.bind(this));
-
-  this.informationService = new Service.AccessoryInformation();
-
-  this.informationService
-  .setCharacteristic(Characteristic.Manufacturer, "Panasonic")
-  .setCharacteristic(Characteristic.Model, "55CX700")
-  .setCharacteristic(Characteristic.SerialNumber, "Panasonic SN");
 
   // Init the panasonic controller
   this.tv = new PanasonicViera(this.HOST);
-}
-
-PanasonicTV.prototype.getServices = function() {
-  return [this.informationService, this.service];
 }
 
 
@@ -179,4 +157,28 @@ PanasonicTV.prototype.getPowerState = function(ipAddress, stateCallback) {
 
   req.write(body);
   req.end();
+}
+
+PanasonicTV.prototype.getServices = function() {
+
+  this.informationService = new Service.AccessoryInformation();
+
+  this.informationService
+  .setCharacteristic(Characteristic.Manufacturer, "Panasonic")
+  .setCharacteristic(Characteristic.Model, "55CX700")
+  .setCharacteristic(Characteristic.SerialNumber, "Panasonic SN");
+
+  this.service = new Service.Switch(this.name);
+
+  this.service
+  .getCharacteristic(Characteristic.On)
+  .on('set', this.setOn.bind(this))
+  .on('get', this.getOn.bind(this));
+
+  this.service
+  .addCharacteristic(Characteristic.Mute)
+  .on('get', this.getMuteStatus.bind(this))
+  .on('set', this.setMuteTV.bind(this));
+
+  return [this.informationService, this.service];
 }
