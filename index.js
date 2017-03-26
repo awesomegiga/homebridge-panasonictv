@@ -22,7 +22,7 @@ function PanasonicTV(log, config) {
 
   // Init the panasonic controller
   this.tv = new PanasonicViera(this.HOST);
-  this.Sspd = new ssdp();
+  this.Sspd = new ssdp;
 
   Ssdp.on('DeviceAvailable', function output(self){
   if (self.nt == PanasonicTV){
