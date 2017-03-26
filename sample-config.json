@@ -5,7 +5,7 @@
         "port": 51826,
         "pin": "031-45-156"
     },
-    
+
     "description": "Hello World",
 
     "platforms": [],
@@ -16,6 +16,7 @@
             "name": "TV",
             "description": "Livingroom tv",
             "ip": "192.168.178.20",
+            "uuid": "UUID",
             "maxVolume": 15
         }
     ]
