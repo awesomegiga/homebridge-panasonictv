@@ -55,13 +55,13 @@ function PanasonicTV(log, config) {
   //this.Sspd = new ssdp;
 
   self = this;
-  SspdDiscovery.on('DeviceOn', function (data) {
+  this.SspdDiscovery.on('DeviceOn', function (data) {
     self.log('DeviceOn', data);
     self.powerState = true;
     self.eventSet();
   });
 
-  SspdDiscovery.on('DeviceOff', function (data) {
+  this.SspdDiscovery.on('DeviceOff', function (data) {
     self.log('DeviceOff', data);
     self.powerState = false;
     self.eventSet();
