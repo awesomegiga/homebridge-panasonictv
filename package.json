@@ -1,6 +1,6 @@
 {
   "name": "homebridge-panasonictv",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Panasonic TV plugin for homebridge: https://github.com/nfarina/homebridge",
   "license": "ISC",
   "keywords": [
@@ -24,9 +24,8 @@
     "url": "git://github.com/awesomegiga/homebridge-panasonictv.git"
   },
   "dependencies": {
-    "http": "",
     "panasonic-viera-control": "0.0.1",
     "request": "^2.65.0",
-    "node-upnp-ssdp": ""
+    "node-upnp-ssdp": "0.1.1"
   }
 }
