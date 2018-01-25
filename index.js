@@ -1,15 +1,12 @@
-var inherits = require('util').inherits;
-var PanasonicViera = require('panasonic-viera-control/panasonicviera.js');
-var ssdp = require('node-upnp-ssdp');
-const EventEmitter = require('events');
 
+const EventEmitter = require('events');
 
 class sspdUpnpDetection extends EventEmitter {
   constructor(uuid) {
     super();
     this._uuid = uuid;
     this.ssdp = ssdp;
-    this.deviceUUID = PanasonicTV_UUID;
+    this.deviceUUID = uuid || {};
     ssdp.on('DeviceAvailable', this.deviceAvailable.bind(this));
     ssdp.on('DeviceUnavailable', this.doeviceUnavailable.bind(this));
 
@@ -18,7 +15,7 @@ class sspdUpnpDetection extends EventEmitter {
   deviceAvailable(upnpDevice){
     if (upnpDevice.nt == this.deviceUUID)
     {
-      console.log('Panasonic TV is turned ON\n');
+      //console.log('Panasonic TV is turned ON\n');
       this.emit('DeviceOn', 'TV');
     }
   }
@@ -26,7 +23,7 @@ class sspdUpnpDetection extends EventEmitter {
   doeviceUnavailable(upnpDevice){
     if (upnpDevice.nt == this.deviceUUID)
     {
-      console.log('Panasonic TV is turned OFF\n');
+      //console.log('Panasonic TV is turned OFF\n');
       this.emit('DeviceOff', 'TV');
     }
   }
@@ -50,64 +47,57 @@ function PanasonicTV(log, config) {
 
   // Init the panasonic controller
   this.tv = new PanasonicViera(this.HOST);
-
-  this.SspdDiscovery = new sspdDiscovery(this.UUID);
-  //this.Sspd = new ssdp;
+  this.sspdDiscovery = new sspdUpnpDetection(this.UUID);
 
   self = this;
-  this.SspdDiscovery.on('DeviceOn', function (data) {
-    self.log('DeviceOn', data);
+
+  this.sspdDiscovery.on('DeviceOn', function (data) {
     self.powerState = true;
     self.eventSet();
   });
 
-  this.SspdDiscovery.on('DeviceOff', function (data) {
-    self.log('DeviceOff', data);
-    self.powerState = false;
-    self.eventSet();
-  });
-}
-
-
-PanasonicTV.prototype = {
-
-  getOn: function(callback) {
-    this.log(this.name, "Get Power State = ", this.powerState);
-    callback(null, this.powerState);
-  },
-
-  togglePower: function(on, callback) {
-    this.tv.send(PanasonicViera.POWER_TOGGLE);
-    this.log('Toggle power');
-  },
-
-  eventSet: function() {
-    this.service
-    .setCharacteristic(Characteristic.On, this.powerState || false);
-    this.log('Set power to', this.powerState);
+  
+    this.sspdDiscovery.on('DeviceOff', function (data) {
+      self.powerState = false;
+      self.eventSet();
+    });
   }
-}
 
+
+  PanasonicTV.prototype = {
+
+    getOn: function(callback) {
+      this.log(this.name, "Get Power State = ", this.powerState);
+      callback(null, this.powerState);
+    },
+
+    togglePower: function(value, callback) {
+      if (this.powerState !== value){
+        this.tv.send(PanasonicViera.POWER_TOGGLE);
+        this.log('Toggle power');
+      }
+      callback(null);
+    },
+
+    eventSet: function() {
+      this.service
+      .setCharacteristic(Characteristic.On, this.powerState || false);
+      this.log('Set power to', this.powerState);
+    }
+  }
+  
 PanasonicTV.prototype.getServices = function() {
+  this.service = new Service.Switch(this.name);
+  this.service
+    .getCharacteristic(Characteristic.On)
+    .on('set', this.togglePower.bind(this))
+    .on('get', this.getOn.bind(this));
 
   this.informationService = new Service.AccessoryInformation();
-
   this.informationService
-  .setCharacteristic(Characteristic.Manufacturer, "Panasonic")
-  .setCharacteristic(Characteristic.Model, "55CX700")
-  .setCharacteristic(Characteristic.SerialNumber, this.UUID);
-
-  this.service = new Service.Switch(this.name);
-
-  this.service
-  .getCharacteristic(Characteristic.On)
-  .on('set', this.togglePower.bind(this))
-  .on('get', this.getOn.bind(this));
-
-  // this.service
-  // .addCharacteristic(Characteristic.Mute)
-  // .on('get', this.getMuteStatus.bind(this))
-  // .on('set', this.setMuteTV.bind(this));
+    .setCharacteristic(Characteristic.Manufacturer, "Panasonic")
+    .setCharacteristic(Characteristic.Model, "55CX700")
+    .setCharacteristic(Characteristic.SerialNumber, this.UUID);
 
   return [this.informationService, this.service];
 }
