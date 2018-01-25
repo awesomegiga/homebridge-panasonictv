@@ -1,4 +1,6 @@
-
+var inherits = require('util').inherits;
+var PanasonicViera = require('panasonic-viera-control/panasonicviera.js');
+var ssdp = require('node-upnp-ssdp');
 const EventEmitter = require('events');
 
 class sspdUpnpDetection extends EventEmitter {
